@@ -137,7 +137,7 @@ Once the bipartite graph is created it is possible to conduct the analysis by ca
 <<PerformAnalisys>>=
 step=5000
 max=100*sum(BRCA_binary_matrix)
-scores<-birewire.analysis.bipartite(BRCA_binary_matrix,step,verbose=FALSE,max.iter=max,n.networks=5)
+scores<-birewire.analysis.bipartite(BRCA_binary_matrix,step,verbose=FALSE,max.iter=max,n.networks=5,display=)
 
 @
 
