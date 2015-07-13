@@ -281,13 +281,14 @@ birewire.rewire.sparse.bipartite<- function(graph,  max.iter="n", accuracy=0.000
 
   
   e=length(E(g))
-  edges= get.edgelist(names=FALSE,g)
+  edges=get.edgelist(names=FALSE,g)
   edges=edges[order(edges[,1]),]
   
   nr=length(unique(edges[,1]))
   nc=length(V(g))-nr
   t=nc*nr
-  names=V(g)$label
+  names=V(g)$name
+  types=V(g)$type
 		if(exact==T)
     	{
 					if( max.iter=="n")
@@ -308,9 +309,15 @@ birewire.rewire.sparse.bipartite<- function(graph,  max.iter="n", accuracy=0.000
 
 			}
   
-  gg<-graph.bipartite(edges=result,types=V(g)$type,directed=FALSE)
-  if(!is.null(names))
- 	 V(gg)$label=names
+	if(!is.null(names))
+	{
+		gg<-graph.edgelist(t(matrix(names[result],nrow=2)))
+	}else
+	{
+		gg<-graph.edgelist(t(matrix(result,row=2)))
+	}
+	V(gg)$type=types[unique(result)]
+	gg=as.undirected(gg)
   
   return(gg)
 }
@@ -471,47 +478,48 @@ if(!is.matrix(adjacency) && !is.data.frame(adjacency) && !is.igraph(adjacency) )
 
 
 birewire.rewire.sparse<- function(graph,  max.iter="n",accuracy=0.00005,verbose=TRUE,MAXITER_MUL=10,exact=FALSE)
-	{ if(verbose)
-    verbose=1
-  else
-    verbose=0
- 		n=as.numeric(length(V(graph)))
-        
-		t=n^2/2
-		e=as.numeric(length(E(graph)))
+	{ 
+	if(verbose)
+		verbose=1
+	else
+		verbose=0
+	n=as.numeric(length(V(graph)))
+	t=n^2/2
+	e=as.numeric(length(E(graph)))
+	d=e/t
+	edges= get.edgelist(graph,names=F)
+	edges=edges[order(edges[,1]),]-1
+	names=V(graph)$name
 
-		d=e/t
-        edges= get.edgelist(graph)
-        edges[ , c(1,2)] <- edges[ , c(2,1)]
-        edges=edges[order(edges[,1]),]-1
-        names=V(graph)$label
-        
 
 	if(exact==TRUE)
-    	{
-						if( max.iter=="n")
-  				 	 max.iter=ceiling((e*(1-e/t)) *log(x=(1-e/t)/accuracy) /2  )
-						MAXITER_MUL=MAXITER_MUL*max.iter
- 						result<-.Call("R_rewire_sparse", edges,n , n, as.numeric( max.iter),e,verbose,MAXITER_MUL+1)
+	{
+	if( max.iter=="n")
+		 max.iter=ceiling((e*(1-e/t)) *log(x=(1-e/t)/accuracy) /2  )
+	MAXITER_MUL=MAXITER_MUL*max.iter
+	result<-.Call("R_rewire_sparse", edges,n , n, as.numeric( max.iter),e,verbose,MAXITER_MUL+1)
 
 
-			}
+	}
 
-		else
-			{
+	else
+	{
 
-        		if(max.iter=="n")
-			 		max.iter=ceiling((e/(2*d^3-6*d^2+2*d+2))*log(x=(1-d)/accuracy))
-				
- 				result<-.Call("R_rewire_sparse", edges,n , n, as.numeric( max.iter),e,verbose,0)
+	if(max.iter=="n")
+	max.iter=ceiling((e/(2*d^3-6*d^2+2*d+2))*log(x=(1-d)/accuracy))
+	result<-.Call("R_rewire_sparse", edges,n , n, as.numeric( max.iter),e,verbose,0)
 
-			}
+	}
 
-		
-        gg<-graph(edges=result+1,directed=FALSE,n=n)
-        if(!is.null(names))
-        	V(gg)$label=names
-		return( gg)
+	if(!is.null(names))
+	{
+		gg<-graph.edgelist(t(matrix(names[result+1],nrow=2)),directed=FALSE)
+	}else
+	{
+				gg<-graph.edgelist(t(matrix(result+1,nrow=2)),directed=FALSE)
+
+	}
+	return( gg)
 	}
 
 
@@ -799,8 +807,7 @@ return(df)
 }
 
 ##from a sif file, the routine generates the negative and positive incidence matrix
-birewire.induced.bipartite<-function(g,delimitators=list(negative='-',positive='+'))
-
+birewire.induced.bipartite<-function(g,delimitators=list(negative='-',positive='+'),sparse=FALSE)
 {
 	if(is.null(delimitators[['positive']]) | is.null(delimitators[['negative']]) )
 			    {
@@ -813,14 +820,24 @@ birewire.induced.bipartite<-function(g,delimitators=list(negative='-',positive='
 	dsg=list()
 	g_p=g[g[,2]==delimitators[['positive']],c(1,3)]
 	g_n=g[g[,2]==delimitators[['negative']],c(1,3)]
+	if(!sparse)
+	{
+		positive=as.data.frame.matrix(table(g_p))
+		negative=as.data.frame.matrix(table(g_n))
+		dsg[['positive']]=simplify.table(positive)
+		dsg[['negative']]=simplify.table(negative)
+	}else
+	{
+			g_p[,2]=paste(g_p[,2],"_t",sep='')
+			g_n[,2]=paste(g_n[,2],"_t",sep='')
+			dsg[['positive']]=graph.edgelist(as.matrix(g_p),directed=F)
+			dsg[['negative']]=graph.edgelist(as.matrix(g_n),directed=F)
+			V(dsg[['positive']])$type=0
+			V(dsg[['positive']])$type[which(unlist(lapply(strsplit(V(dsg[['positive']])$name,"_"),length))==2)]=1
+			V(dsg[['negative']])$type=0
+			V(dsg[['negative']])$type[which(unlist(lapply(strsplit(V(dsg[['negative']])$name,"_"),length))==2)]=1
 
-	positive=as.data.frame.matrix(table(g_p))
-
-	negative=as.data.frame.matrix(table(g_n))
-	dsg[['positive']]=simplify.table(positive)
-	
-	dsg[['negative']]=simplify.table(negative)
-	
+	}
 return(dsg)
 
 }	
@@ -838,9 +855,20 @@ birewire.build.dsg<-function(dsg,delimitators=list(negative='-',positive='+'))
 			    }
 	positive=dsg[['positive']]
 	negative=dsg[['negative']]
+	if(!is.igraph(dsg[['positive']]))
+	{
+		g_p=get.data.frame.from.incidence(positive,delimitators[['positive']])
+		g_n=get.data.frame.from.incidence(negative,delimitators[['negative']])
+		}else
+		{
+			g_p=get.edgelist(dsg[['positive']])
+			g_p[,3]=delimitators[['positive']]
+			g_p=g_p[,c(1,3,2)]
 
-	g_p=get.data.frame.from.incidence(positive,delimitators[['positive']])
-	g_n=get.data.frame.from.incidence(negative,delimitators[['negative']])
+			g_n=get.edgelist(dsg[['negative']])
+			g_n[,3]=delimitators[['negative']]
+			g_n=g_n[,c(1,3,2)]
+		}
 	g=rbind(g_p,g_n)
 	return(g)
 }
@@ -867,7 +895,7 @@ birewire.save.dsg<-function(g,file)
 ##jaccard index for dsg
 	birewire.similarity.dsg<-function(m1,m2)
 {
-	
+
  x=sum(m1[['positive']]*m2[['positive']]) +sum(m1[['negative']]*m2[['negative']] )
 e=sum(m1[['positive']])+sum(m2[['positive']])+sum(m1[['negative']])+sum(m2[['negative']])
   return( x/(e-x))
