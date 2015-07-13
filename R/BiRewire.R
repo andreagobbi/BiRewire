@@ -281,8 +281,10 @@ birewire.rewire.sparse.bipartite<- function(graph,  max.iter="n", accuracy=0.000
 
   
   e=length(E(g))
+  ##NB sholud have all id from 1 to nnodes
   edges=get.edgelist(names=FALSE,g)
-  edges=edges[order(edges[,1]),]
+
+  edges=edges[order(edges[,1]),]-1
   
   nr=length(unique(edges[,1]))
   nc=length(V(g))-nr
@@ -311,15 +313,14 @@ birewire.rewire.sparse.bipartite<- function(graph,  max.iter="n", accuracy=0.000
   
 	if(!is.null(names))
 	{
-		gg<-graph.edgelist(t(matrix(names[result],nrow=2)))
+		gg<-graph.edgelist(t(matrix(names[result+1],nrow=2)))
 	}else
 	{
-		gg<-graph.edgelist(t(matrix(result,row=2)))
+		gg<-graph.edgelist(t(matrix(result+1,nrow=2)))
 	}
-	V(gg)$type=types[unique(result)]
-	gg=as.undirected(gg)
-  
-  return(gg)
+	V(gg)$type=types[unique(result+1)]
+  	
+  return(as.undirected(gg))
 }
 
 birewire.analysis.undirected<- function(adjacency, step=10, max.iter="n",accuracy=0.00005,verbose=TRUE,MAXITER_MUL=10,exact=FALSE,n.networks=50,display=TRUE) 
@@ -934,6 +935,7 @@ birewire.analysis.dsg<-function(dsg, step=10, max.iter.pos='n',max.iter.neg='n',
 					}
 	if(display)
 	{
+		try(dev.off())
 		mean=colMeans(mag$data)
 		std=apply(mag$data,2,sd)
 		sup=mean+ qt(.975,nrow(mag$data)-1)*std/sqrt(nrow(mag$data))
