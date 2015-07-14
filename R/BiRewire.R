@@ -62,7 +62,7 @@ birewire.analysis.bipartite<- function(incidence, step=10, max.iter="n",accuracy
     	{
 			if( max.iter=="n")
 				max.iter=ceiling((e*(1-e/t)) *log(x=(1-e/t)/accuracy) /2  )
-			MAXITER_MUL=MAXITER_MUL*max.iter
+			MAXITER_MUL=MAXITER_MUL*as.numeric(max.iter)
 			result<-.Call("R_analysis", incidence,nc,nr,as.numeric(step),as.numeric(max.iter),verbose,MAXITER_MUL+1)
 			result$N=ceiling((e*(1-e/t)) *log(x=(1-e/t)/accuracy) /2  )
 		}
@@ -120,8 +120,7 @@ if(!is.matrix(incidence) && !is.data.frame(incidence)  && !is.igraph(incidence))
 
   }
 if(is.igraph(incidence))
-	return(birewire.rewire.sparse.bipartite(incidence,  max.iter, accuracy,verbose,MAXITER_MUL,exact))
-
+	return(birewire.rewire.sparse.bipartite(incidence,  max.iter= max.iter, accuracy=accuracy,verbose=verbose,MAXITER_MUL=MAXITER_MUL,exact=exact))	
 	dataframe=FALSE
 		if(is.data.frame(incidence))
 		{	dataframe=TRUE
@@ -156,7 +155,7 @@ if(is.igraph(incidence))
     	{
 					if( max.iter=="n")
 						max.iter=ceiling((e*(1-e/t)) *log(x=(1-e/t)/accuracy) /2  )
-					MAXITER_MUL=MAXITER_MUL*max.iter
+					MAXITER_MUL=MAXITER_MUL*as.numeric(max.iter)
   				result<-.Call("R_rewire_bipartite", incidence,nc , nr, as.numeric( max.iter),verbose,MAXITER_MUL+1)
 
 			}
@@ -246,6 +245,7 @@ birewire.rewire.bipartite.and.projections<-function(graph,step=10,max.iter="n",a
 #similarity jaccard score 
 birewire.similarity<-function(m1,m2)
 {
+	#print("mi rompo")
 	if(is.igraph(m1))
 	{
 		if(is.bipartite(m1))
@@ -262,6 +262,8 @@ birewire.similarity<-function(m1,m2)
 	
 	if(dim(m2)[1]!=dim(m1)[1])
 		m1=t(m1)
+	#print("no")
+
 	return( sum( m1*m2)/sum(m1+m2-m1*m2))
 	
   
@@ -295,7 +297,7 @@ birewire.rewire.sparse.bipartite<- function(graph,  max.iter="n", accuracy=0.000
     	{
 					if( max.iter=="n")
 					  max.iter=ceiling((e*(1-e/t)) *log(x=(1-e/t)/accuracy) /2  )
-					MAXITER_MUL=MAXITER_MUL*max.iter
+					MAXITER_MUL=MAXITER_MUL*as.numeric(max.iter)
  					 result<-.Call("R_rewire_sparse_bipartite", edges,nc , nr, as.numeric( max.iter),e,verbose,MAXITER_MUL+1)
   
 
@@ -305,22 +307,27 @@ birewire.rewire.sparse.bipartite<- function(graph,  max.iter="n", accuracy=0.000
 			{
 					if( max.iter=="n")
     				max.iter=ceiling((e/(2-2*e/t)) *log(x=(1-e/t)/accuracy) )  
+
  					 result<-.Call("R_rewire_sparse_bipartite", edges,nc , nr, as.numeric( max.iter),e,verbose,0)
 
 
 
 			}
-  
+	#print(edges+1)
+  	#print(result+1)
 	if(!is.null(names))
 	{
 		gg<-graph.edgelist(t(matrix(names[result+1],nrow=2)))
+		#gg= graph.bipartite( types,names[result+1])
 	}else
 	{
 		gg<-graph.edgelist(t(matrix(result+1,nrow=2)))
+		#gg= graph.bipartite( types,result+1)
+
 	}
-	V(gg)$type=types[unique(result+1)]
+	V(gg)$type=types
   	
-  return(as.undirected(gg))
+  return(gg)
 }
 
 birewire.analysis.undirected<- function(adjacency, step=10, max.iter="n",accuracy=0.00005,verbose=TRUE,MAXITER_MUL=10,exact=FALSE,n.networks=50,display=TRUE) 
@@ -352,7 +359,7 @@ birewire.analysis.undirected<- function(adjacency, step=10, max.iter="n",accurac
 		{
 			if( max.iter=="n")
 			max.iter=ceiling((e*(1-e/t)) *log(x=(1-e/t)/accuracy) /2  )
-			MAXITER_MUL=MAXITER_MUL*max.iter
+			MAXITER_MUL=MAXITER_MUL*as.numeric(max.iter)
 			result<-.Call("R_analysis_undirected", adjacency,n,n,as.numeric(step),as.numeric(max.iter),as.numeric(verbose),MAXITER_MUL)
 			result$N=ceiling((e*(1-e/t)) *log(x=(1-e/t)/accuracy) /2  )
 		}
@@ -445,7 +452,7 @@ if(!is.matrix(adjacency) && !is.data.frame(adjacency) && !is.igraph(adjacency) )
     	{
 						if( max.iter=="n" )
     					max.iter=ceiling((e*(1-e/t)) *log(x=(1-e/t)/accuracy) /2  )
-						MAXITER_MUL=MAXITER_MUL*max.iter
+						MAXITER_MUL=MAXITER_MUL*as.numeric(max.iter)
  						result<-.Call("R_rewire", adjacency,n , n, as.numeric( max.iter),verbose,MAXITER_MUL+1)
 
 
@@ -497,7 +504,7 @@ birewire.rewire.sparse<- function(graph,  max.iter="n",accuracy=0.00005,verbose=
 	{
 	if( max.iter=="n")
 		 max.iter=ceiling((e*(1-e/t)) *log(x=(1-e/t)/accuracy) /2  )
-	MAXITER_MUL=MAXITER_MUL*max.iter
+	MAXITER_MUL=MAXITER_MUL*as.numeric(max.iter)
 	result<-.Call("R_rewire_sparse", edges,n , n, as.numeric( max.iter),e,verbose,MAXITER_MUL+1)
 
 
@@ -617,10 +624,17 @@ for( i in sequence)
 	m=matrix(nrow=n.networks,ncol=n.networks,0)
 	for(j in 2:n.networks)
 		{
-			data_tmp=birewire.rewire.bipartite(data_tmp,  max.iter=i, accuracy=accuracy,verbose=verbose,MAXITER_MUL=MAXITER_MUL,exact=exact)
+			#print("entro")
+			data_tmp=birewire.rewire.bipartite(incidence=data_tmp,  max.iter=i, accuracy=accuracy,verbose=verbose,MAXITER_MUL=MAXITER_MUL,exact=exact)
+			#print("esco")
+			#print(data_tmp)
 			tot[[j]]=data_tmp
 			for(k in 1:(j-1))
-				m[k,j]=m[j,k]=1-birewire.similarity(tot[[k]],tot[[j]])
+				{
+					#print("grafo")
+					#print(tot[[k]])
+					m[k,j]=m[j,k]=1-birewire.similarity(tot[[k]],tot[[j]])
+				}
 				
 
 		}
@@ -878,7 +892,7 @@ birewire.load.dsg<-function(path)
 	{
 		
 
-		return(unique(read.table(path)))
+		return(unique(read.table(path,stringsAsFactors=F)))
 
 
 	}

@@ -40,7 +40,7 @@ Davide Albanese
 
 library(igraph)
 library(BiRewire)
-g <- make_bipartite_graph( rep(0:1,length=10), c(1:10))
+g <-graph.bipartite( rep(0:1,length=10), c(1:10))
 
 ##gets the incidence matrix of g
  m<-as.matrix(get.incidence(graph=g))

@@ -38,7 +38,7 @@ Maintainer: Andrea Gobbi <gobbi.andrea@mail.com>
 
 library(igraph)
 library(BiRewire)
-g <- make_bipartite_graph( rep(0:1,length=10), c(1:10))
+g <- graph.bipartite( rep(0:1,length=10), c(1:10))
 g2=birewire.rewire.bipartite(g) 
 
 birewire.similarity(get.incidence(g,sparse=FALSE),get.incidence(g2,sparse=FALSE))

@@ -47,7 +47,7 @@ Davide Albanese
 \examples{
 
 library(BiRewire)
-g <- make_bipartite_graph( rep(0:1,length=10), c(1:10))
+g <- graph.bipartite( rep(0:1,length=100), c(1:100))
 birewire.visual.monitoring.bipartite(g,display=FALSE,n.networks=10)
 
 
